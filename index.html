@@ -1,26 +1,83 @@
+<!DOCTYPE html>
 <html>
 
 <head>
     <title>Application Resilience Demo</title>
     <script src="https://animejs.com/lib/anime.min.js"></script>
+    <script src="Network.js"></script>
     <script>
+        function LoadGenerator() {
+            this.rps = 1;
+            this._intervalId = 0;
+            this.recvCount = 0;
+            this.errCount = 0;
+
+            this.setRequestsPerSecond = function (rps) {
+                clearInterval(this._intervalId);
+                this.rps = rps;
+                this._intervalId = setInterval(this.sendMessage.bind(this), (1000 / this.rps));
+            }
+
+            this.sendMessage = function () {
+                this.netsend({ data: new NetworkRequest('gateway', 'load-generator') });
+            }
+
+            this.start = function () {
+                this._intervalId = setInterval(this.sendMessage.bind(this), (1000 / this.rps));
+            };
+
+            this.addEventListener = function (evtype, handler) {
+                this.netsend = handler;
+            }
+
+            this.postMessage = function (msg) {
+                if (msg.to == 'load-generator') {
+                    this.recvCount++;
+                }
+            }
+        }
+
         function onLoad() {
-            anime({
-                targets: '.message',
-                translateX: 250,
-                loop: true,
-                direction: 'alternate',
-                easing: 'easeInOutSine'
-            });
-            console.log('animated!');
+            // anime({
+            //     targets: '.message',
+            //     translateX: 250,
+            //     loop: true,
+            //     direction: 'alternate',
+            //     easing: 'easeInOutSine'
+            // });
+
+            network = new Network();
+            network.latency = 1;
+            network.jitter = 1;
+
+            datasvr = new Worker('datasvr.js');
+            appsvr = new Worker('appsvr.js');
+            websvr = new Worker('websvr.js');
+            gateway = new Worker('gateway.js');
+
+            gateway.addEventListener('message', (msg) => {
+                if (msg.data.node == 'gateway') {
+                    console.log('Gateway Stats');
+                    console.log(msg.data.stats);
+                }
+            })
+
+            network.addNode("data-server", datasvr);
+            network.addNode("app-server", appsvr);
+            network.addNode("web-server", websvr);
+            network.addNode("gateway", gateway);
+
+            loadgen = new LoadGenerator();
+            network.addNode('load-generator', loadgen);
+            loadgen.start();
         }
     </script>
     <script>
-        function Request () {
+        function Request() {
             this.success = false;
         }
 
-        function Node (dependency = null) {
+        function Node(dependency = null) {
             this.errorCount = 0;
             this.rqstRecvCount = 0;
             this.respSentCount = 0;
@@ -33,13 +90,13 @@
                 this.rqstRecvCount++;
 
                 if (this.dependency) {
-                    rqst = new Request ();
+                    rqst = new Request();
                     this.rqstSentCount++;
-                    this.dependency.execute (rqst);
+                    this.dependency.execute(rqst);
                     this.respRecvCount++;
                     execResult = rqst.success;
-                }else{
-                    if (Math.random () > 0.5) {
+                } else {
+                    if (Math.random() > 0.5) {
                         execResult = false;
                     }
                 }
@@ -47,8 +104,8 @@
                 if (request) {
                     this.respSentCount++;
                     request.success = execResult;
-                }else{
-                    console.log (execResult);
+                } else {
+                    console.log(execResult);
                 }
             }
         }
