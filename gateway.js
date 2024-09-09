@@ -29,7 +29,7 @@ function sendStats () {
     stats.downErr = 0;
     stats.lastUpdate = Date.now ();
 }
-setInterval(sendStats, 3000);
+setInterval(sendStats, 5000);
 
 function doWork () {
     if (clientMsgQueue.length > 0) {

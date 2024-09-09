@@ -37,14 +37,58 @@
             }
         }
 
+        function sumArr(arr) {
+            var a = arr.slice();
+            return a.reduce(function (a, b) { return parseFloat(a) + parseFloat(b); });
+        }
+
+        function sortArr(arr) {
+            var ary = arr.slice();
+            ary.sort(function (a, b) { return parseFloat(a) - parseFloat(b); });
+            return ary;
+        }
+
+        function calcAverage(arr) {
+            var a = arr.slice();
+            if (a.length) {
+                sum = sumArr(a);
+                avg = sum / a.length;
+                return avg;
+            }
+            return false;
+        }
+
+        function calcQuartile(arr, q) {
+            var a = arr.slice();
+            // Turn q into a decimal (e.g. 95 becomes 0.95)
+            q = q / 100;
+
+            // Sort the array into ascending order
+            data = sortArr(a);
+
+            // Work out the position in the array of the percentile point
+            var p = ((data.length) - 1) * q;
+            var b = Math.floor(p);
+
+            // Work out what we rounded off (if anything)
+            var remainder = p - b;
+
+            // See whether that data exists directly
+            if (data[b + 1] !== undefined) {
+                return parseFloat(data[b]) + remainder * (parseFloat(data[b + 1]) - parseFloat(data[b]));
+            } else {
+                return parseFloat(data[b]);
+            }
+        }
+
         function onLoad() {
-            // anime({
-            //     targets: '.message',
-            //     translateX: 250,
-            //     loop: true,
-            //     direction: 'alternate',
-            //     easing: 'easeInOutSine'
-            // });
+            anime({
+                targets: '.message',
+                translateX: 250,
+                loop: true,
+                direction: 'alternate',
+                easing: 'easeInOutSine'
+            });
 
             network = new Network();
             network.latency = 1;
@@ -55,12 +99,33 @@
             websvr = new Worker('websvr.js');
             gateway = new Worker('gateway.js');
 
+            gwConnections = document.getElementById('gwConnections');
+            gwThroughput = document.getElementById('gwThroughput');
+            gwLatMean = document.getElementById('gwLatMean');
+            gwLatPercentiles = document.getElementById('gwLatPercentiles');
+            gwService = document.getElementById('gwService');
+            gwClient = document.getElementById('gwClient');
+            gwQos = document.getElementById('gwQos');
             gateway.addEventListener('message', (msg) => {
                 if (msg.data.node == 'gateway') {
-                    console.log('Gateway Stats');
-                    console.log(msg.data.stats);
+                    stats = msg.data.stats;
+                    period = Date.now() - stats.lastUpdate;
+
+                    connCount = stats.upRqstCount;
+                    throughput = Math.round(stats.upRespCount / period * 1000);
+                    latmean = Math.round (calcAverage(stats.latencies));
+                    lat50 = Math.round (calcQuartile(stats.latencies, 50));
+                    lat90 = Math.round (calcQuartile(stats.latencies, 90));
+                    lat100 = Math.round (calcQuartile(stats.latencies, 100));
+
+                    // console.log('Gateway Stats');
+                    // console.log(msg.data.stats);
+                    gwConnections.innerText = connCount;
+                    gwThroughput.innerText = `${throughput} TPS`;
+                    gwLatMean.innerText = `${latmean} ms`;
+                    gwLatPercentiles.innerText = `${lat50} / ${lat90} / ${lat100} ms`;
                 }
-            })
+            });
 
             network.addNode("data-server", datasvr);
             network.addNode("app-server", appsvr);
@@ -111,15 +176,26 @@
         }
     </script>
     <style>
-        div#demoScreen {
+        div#demoConsole {
             width: auto;
             height: 400px;
             border: 2px solid black;
+            display: grid;
+        }
+
+        div#demoScreen {
             background-color: gray;
             display: grid;
             justify-content: space-evenly;
             align-content: space-evenly;
-            grid-template-columns: auto auto auto auto;
+            grid-template-columns: auto auto auto auto auto;
+        }
+
+        div#demoStats {
+            display: grid;
+            justify-content: space-evenly;
+            align-content: space-evenly;
+            grid-template-columns: auto auto auto auto auto;
         }
 
         span.node {
@@ -142,16 +218,76 @@
             left: 100px;
             top: 75px;
         }
+
+        span.statWindow {
+            border: 1px solid black;
+            height: 200px;
+            width: 300px;
+        }
+
+        span.statLabel {
+            display: inline-block;
+            width: 170px;
+            text-align: right;
+        }
+
+        span.statLine {
+            display: block;
+        }
+
+        span.statValue {
+            padding: 10px;
+        }
     </style>
 </head>
 
 <body onload="onLoad();">
-    <div id="demoScreen">
-        <span id="clientNode" class="node">Client</span>
-        <span id="gatewayNode" class="node">Node 1</span>
-        <span id="appNode" class="node">Node 2</span>
-        <span id="dataNode" class="node">Node 3</span>
-        <span class="message">msg</span>
+    <div id="demoConsole">
+        <div id="demoScreen">
+            <span id="loadNode" class="node">Load Generator</span>
+            <span id="clientNode" class="node">Gateway</span>
+            <span id="gatewayNode" class="node">Web Server</span>
+            <span id="appNode" class="node">App Server</span>
+            <span id="dataNode" class="node">Data Server</span>
+            <span class="message">msg</span>
+        </div>
+        <div id="demoStats">
+            <span id="loadNodeStats" class="statWindow">1 RPS</span>
+            <span id="gatewayNodeStats" class="statWindow">
+                <div class="statTitle">Gateway</div>
+                <span class="statLine">
+                    <span class="statLabel">Connections</span>
+                    <span id="gwConnections" class="statValue">1</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">Throughput</span>
+                    <span id="gwThroughput" class="statValue">1 TPS</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">Latency mean</span>
+                    <span id="gwLatMean" class="statValue">23 ms</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">Latency P50 / P90 / P100</span>
+                    <span id="gwLatPercentiles" class="statValue">23 / 24 / 24 ms</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">Service</span>
+                    <span id="gwService" class="statValue">1.000</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">Client</span>
+                    <span id="gwClient" class="statValue">1.000</span>
+                </span>
+                <span class="statLine">
+                    <span class="statLabel">QoS</span>
+                    <span id="gwQos" class="statValue">1.000</span>
+                </span>
+            </span>
+            <span id="webNodeStats" class="statWindow">1 RPS</span>
+            <span id="appNodeStats" class="statWindow">1 RPS</span>
+            <span id="dataNodeStats" class="statWindow">1 RPS</span>
+        </div>
     </div>
 </body>
 
