@@ -7,4 +7,4 @@ const server = new Server (upstream, downstream, nodeName, postMessage.bind (thi
 
 addEventListener ('message', server.onMessage.bind (server));
 
-server.doWork ();
+server.start ();

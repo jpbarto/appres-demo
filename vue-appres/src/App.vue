@@ -2,67 +2,80 @@
   <header>Resilience Playground</header>
   <div id="console">
     <div id="statsConsole">
-      <load-stats :load-gen-state="loadGenState"/>
+      <LoadStats :stats-board="loadStatsBoard" />
+      <!--
       <node-stats :worker="gateway" />
       <node-stats :worker="websvr" />
       <node-stats :worker="appsvr" />
-      <node-stats :worker="datasvr" />
+      <node-stats :worker="datasvr" /> -->
+      Hello World
     </div>
   </div>
 </template>
 
 <script>
-import { reactive } from 'vue';
+// import { ref } from 'vue';
 
-import NodeStats from './components/NodeStats.vue'
+// import NodeStats from './components/NodeStats.vue'
 import LoadStats from './components/LoadStats.vue';
 import * as jsNetwork from './assets/js/Network.js';
-import * as loadGenerator from './assets/js/LoadGenerator.js';
+import * as StatsMan from './assets/js/StatsMan.js';
 
 const network = new jsNetwork.Network();
 network.latency = 1;
 network.jitter = 1;
 
 const datasvr = new Worker(new URL('./assets/js/DataServer.js', import.meta.url));
-datasvr.nodeName = 'Data Server';
-datasvr.nodeId = 'data-server';
+datasvr.nodeDisplayName = 'Data Server';
+datasvr.nodeName = 'data-server';
 const appsvr = new Worker(new URL('./assets/js/AppServer.js', import.meta.url));
-appsvr.nodeName = 'App Server';
-appsvr.nodeId = 'app-server';
+appsvr.nodeDisplayName = 'App Server';
+appsvr.nodeName = 'app-server';
 const websvr = new Worker(new URL('./assets/js/WebServer.js', import.meta.url));
-websvr.nodeName = 'Web Server';
-websvr.nodeId = 'web-server';
+websvr.nodeDisplayName = 'Web Server';
+websvr.nodeName = 'web-server';
 const gateway = new Worker(new URL('./assets/js/GatewayServer.js', import.meta.url));
-gateway.nodeName = 'Gateway';
-gateway.nodeId = 'gateway';
+gateway.nodeDisplayName = 'Gateway';
+gateway.nodeName = 'gateway';
+const loadGen = new Worker(new URL('./assets/js/LoadGenerator.js', import.meta.url));
+loadGen.nodeDisplayName = 'Load Generator';
+loadGen.nodeName = 'load-generator';
 
-network.addNode("data-server", datasvr);
-network.addNode("app-server", appsvr);
-network.addNode("web-server", websvr);
-network.addNode("gateway", gateway);
+network.addNode(datasvr.nodeName, datasvr);
+network.addNode(appsvr.nodeName, appsvr);
+network.addNode(websvr.nodeName, websvr);
+network.addNode(gateway.nodeName, gateway);
+network.addNode(loadGen.nodeName, loadGen);
 
-const loadGenState = reactive(new loadGenerator.LoadGeneratorState ());
-loadGenState.requestsPerSec = 1;
-const loadGen = new loadGenerator.LoadGenerator(loadGenState);
-network.addNode('load-generator', loadGen);
+const statsMan = new StatsMan.StatsMan();
+statsMan.addNode(datasvr);
+statsMan.addNode(appsvr);
+statsMan.addNode(websvr);
+statsMan.addNode(gateway);
+statsMan.addNode(loadGen);
+// const loadStatsBoard = statsMan.loadStatsBoard;
+const loadStatsBoard = statsMan.nodeStats[loadGen.nodeName];
+
+loadGen.postMessage({
+  command: 'setRequestsPerSecond',
+  rps: 25
+});
 
 export default {
   name: 'App',
   components: {
-    NodeStats,
+    // NodeStats,
     LoadStats,
   },
-  data () {
+  data() {
     return {
-      loadGenState: loadGenState,
+      // loadStatsBoard: statsMan.nodeStats['load-generator'],
+      loadStatsBoard: loadStatsBoard,
       gateway: gateway,
       websvr: websvr,
       appsvr: appsvr,
       datasvr: datasvr
     }
-  },
-  mounted() {
-    loadGen.start();
   }
 }
 </script>

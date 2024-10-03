@@ -4,16 +4,20 @@
     <div id="nodeStats" class="statWindow">
       <div class="statTitle">Load Generator</div>
       <div class="statLine">
-        <span class="statLabel">Requests / sec</span>
-        <span id="gwThroughput" class="statValue">{{ loadGenState.requestsPerSec }} TPS</span>
+        <span class="statLabel">Response / sec</span>
+        <span id="gwThroughput" class="statValue">{{ statsBoard.downRespCount }} TPS</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Errors</span>
-        <span id="gwLatMean" class="statValue">{{ loadGenState.recvCount }}</span>
+        <span id="gwLatMean" class="statValue">{{  statsBoard.downErr }}</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Latency Mean</span>
-        <span id="gwLatMean" class="statValue">{{ Math.round(loadGenState.latencies[0]) }} ms</span>
+        <span id="gwLatMean" class="statValue">23 ms</span>
+      </div>
+      <div class="statLine">
+        <span class="statLabel">Last Update</span>
+        <span id="gwLatMean" class="statValue">{{ new Date(statsBoard.lastUpdate).toLocaleTimeString('en-us', { hour12: false, hour:"2-digit", minute:"2-digit", second:"2-digit"}) }}</span>
       </div>
     </div>
   </div>
@@ -25,7 +29,7 @@
 export default {
   name: 'LoadStats',
   props: {
-    loadGenState: Object
+    statsBoard: Object
   }
 }
 </script>

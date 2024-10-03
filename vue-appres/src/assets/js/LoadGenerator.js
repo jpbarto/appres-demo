@@ -1,43 +1,36 @@
+import { Server } from './Server.js';
 import { NetworkRequest } from './Network.js';
 
-export function LoadGeneratorState () {
-    this.requestsPerSec = 1;
-    this.errorCount = 0;
-    this.recvCount = 0;
-    this.requestQueue = [];
-    this.latencies = [];
-}
+const upstream = null;
+const downstream = 'gateway';
+const nodeName = 'load-generator';
+const server = new Server(upstream, downstream, nodeName, postMessage.bind(this));
+// eslint-disable-next-line
+var intervalId;
+var requestsPerSec = 1;
 
-export function LoadGenerator(lgState) {
-    this.state = lgState;
-    this._intervalId = 0;
+addEventListener('message', server.onMessage.bind(server));
 
-    this.setRequestsPerSecond = function (rps) {
-        clearInterval(this._intervalId);
-        this.state.requestsPerSec = rps;
-        this._intervalId = setInterval(this.sendMessage.bind(this), (1000 / this.state.requestsPerSec));
-    }
+server.start();
 
-    this.sendMessage = function () {
-        const rqst = new NetworkRequest('gateway', 'load-generator');
-        this.state.requestQueue.push (rqst);
-        this.netsend({ data: rqst });
-    }
-
-    this.start = function () {
-        this._intervalId = setInterval(this.sendMessage.bind(this), (1000 / this.state.requestsPerSec));
-    };
-
-    this.addEventListener = function (evtype, handler) {
-        this.netsend = handler;
-    }
-
-    this.postMessage = function (msg) {
-        if (msg.to == 'load-generator') {
-            var origRqstIndex = this.state.requestQueue.findIndex((request) => request.traceId == msg.traceId);
-            var origRqst = this.state.requestQueue.splice(origRqstIndex, 1)[0];
-            this.latencies.push (Date.now () - origRqst.created);
-            this.state.recvCount++;
-        }
+function setRequestsPerSecond(rps) {
+    clearInterval(intervalId);
+    requestsPerSec = rps;
+    if (requestsPerSec > 0) {
+        intervalId = setInterval(sendLoadMessage, (1000 / requestsPerSec));
     }
 }
+
+// eslint-disable-next-line
+function sendLoadMessage() {
+    server.sendMessage(new NetworkRequest(downstream, nodeName));
+}
+
+function handleCommandMessage (msg) {
+    switch (msg.data.command) {
+        case 'setRequestsPerSecond':
+            setRequestsPerSecond(msg.data.rps);
+            break;
+    }
+}
+addEventListener('message', handleCommandMessage);

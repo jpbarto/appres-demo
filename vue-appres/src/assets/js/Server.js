@@ -11,66 +11,77 @@ export function Server(upstream, downstream, nodeName, postMessage) {
     this.downMsgQueue = [];
 
     this.stats = {
-        latencies: [], // a history since lastUpdate of time taken to respond to a request
         upRqstCount: 0, // number of requests sent from upstream
         upRespCount: 0, // number of responses sent to upstream
+        upLatencies: [], // a history since lastUpdate of time taken to respond to a request (in milliseconds)
+        upErr: 0, // number of errors returned to the upstream
         downRqstCount: 0, // number of requests sent downstream
         downRespCount: 0, // number of responses from downstream
-        upErr: 0, // number of errors returned to the upstream
         downErr: 0, // number of errors received from downstream
         lastUpdate: Date.now()
     }
 
     this.sendStats = function () {
-        this.postMessage({ node: this.nodeName, stats: this.stats });
+        this.postMessage({ nodeName: this.nodeName, stats: this.stats });
         this.resetStats();
         this.stats.lastUpdate = Date.now();
     }
 
     this.resetStats = function () {
-        this.stats.latencies.length = 0;
         this.stats.upRqstCount = 0;
         this.stats.upRespCount = 0;
+        this.stats.upLatencies.length = 0;
+        this.stats.upErr = 0;
         this.stats.downRqstCount = 0;
         this.stats.downRespCount = 0;
-        this.stats.upErr = 0;
         this.stats.downErr = 0;
         this.stats.lastUpdate = Date.now();
     }
 
-    this.doWork = function () {
-        var clientRequest;
+    this.processMessageQueues = function () {
         var clientResponse;
 
         if (this.clientMsgQueue.length > 0) {
-            clientRequest = this.clientMsgQueue.shift();
-            this.workingQueue.push(clientRequest);
+            var clientRequest = this.clientMsgQueue.shift();
 
             if (this.downstream != null) {
-                var downRequest = new NetworkRequest(this.downstream, this.nodeName);
-                downRequest.traceId = clientRequest.traceId;
-                this.postMessage(downRequest);
-                this.stats.downRqstCount++;
+                this.sendMessage(clientRequest);
             } else {
                 // I must be a data server, we just do work and reply, no downstream
                 clientResponse = new NetworkResponse(this.upstream, this.nodeName, clientRequest.traceId, { result: 'success' });
                 this.postMessage(clientResponse);
+                this.stats.upRespCount++;
+                this.stats.upLatencies.push(Date.now() - clientRequest.received);
             }
         }
 
         if (this.downMsgQueue.length > 0) {
             // get the downstream response from the queue and find its matching client request (based on trace id)
             var downResponse = this.downMsgQueue.shift();
-            var clientRequestIndex = this.workingQueue.findIndex((request) => request.traceId == downResponse.traceId);
-            clientRequest = this.workingQueue.splice(clientRequestIndex, 1)[0];
+            var workRequestIndex = this.workingQueue.findIndex((request) => request.traceId == downResponse.traceId);
+            var workRequest = this.workingQueue.splice(workRequestIndex, 1)[0];
             // craft a response for the client and send it
-            clientResponse = new NetworkResponse(this.upstream, this.nodeName, clientRequest.traceId, downResponse.data);
-            this.postMessage(clientResponse);
-            this.stats.upRespCount++;
-            this.stats.latencies.push(Date.now() - clientRequest.received);
+            if (this.upstream != null) {
+                clientResponse = new NetworkResponse(this.upstream, this.nodeName, workRequest.traceId, downResponse.data);
+                this.postMessage(clientResponse);
+                this.stats.upRespCount++;
+                this.stats.upLatencies.push(Date.now() - workRequest.received);
+            }
         }
 
-        setTimeout(this.doWork.bind(this), 2);
+        setTimeout(this.processMessageQueues.bind(this), 2);
+    };
+
+    this.sendMessage = function (request) {
+        this.workingQueue.push(request);
+        var downRequest = new NetworkRequest(this.downstream, this.nodeName);
+        downRequest.traceId = request.traceId;
+        this.postMessage(downRequest);
+        this.stats.downRqstCount++;
+    }
+
+    this.start = function () {
+        this.processMessageQueues();
     };
 
     this.onMessage = function (msg) {
