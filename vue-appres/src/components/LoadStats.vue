@@ -29,7 +29,8 @@
 export default {
   name: 'LoadStats',
   props: {
-    statsBoard: Object
+    statsBoard: Object,
+    worker: Object
   }
 }
 </script>

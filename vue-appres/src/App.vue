@@ -2,9 +2,9 @@
   <header>Resilience Playground</header>
   <div id="console">
     <div id="statsConsole">
-      <LoadStats :stats-board="loadStatsBoard" />
+      <LoadStats :stats-board="loadStatsBoard" :worker="loadgen" />
+      <NodeStats :stats-board="gwStatsBoard" :worker="gateway" />
       <!--
-      <node-stats :worker="gateway" />
       <node-stats :worker="websvr" />
       <node-stats :worker="appsvr" />
       <node-stats :worker="datasvr" /> -->
@@ -16,7 +16,7 @@
 <script>
 // import { ref } from 'vue';
 
-// import NodeStats from './components/NodeStats.vue'
+import NodeStats from './components/NodeStats.vue'
 import LoadStats from './components/LoadStats.vue';
 import * as jsNetwork from './assets/js/Network.js';
 import * as StatsMan from './assets/js/StatsMan.js';
@@ -54,6 +54,7 @@ statsMan.addNode(websvr);
 statsMan.addNode(gateway);
 statsMan.addNode(loadGen);
 // const loadStatsBoard = statsMan.loadStatsBoard;
+const gwStatsBoard = statsMan.nodeStats[gateway.nodeName];
 const loadStatsBoard = statsMan.nodeStats[loadGen.nodeName];
 
 loadGen.postMessage({
@@ -64,17 +65,19 @@ loadGen.postMessage({
 export default {
   name: 'App',
   components: {
-    // NodeStats,
+    NodeStats,
     LoadStats,
   },
   data() {
     return {
       // loadStatsBoard: statsMan.nodeStats['load-generator'],
       loadStatsBoard: loadStatsBoard,
+      gwStatsBoard: gwStatsBoard,
       gateway: gateway,
       websvr: websvr,
       appsvr: appsvr,
-      datasvr: datasvr
+      datasvr: datasvr,
+      loadgen: loadGen
     }
   }
 }
