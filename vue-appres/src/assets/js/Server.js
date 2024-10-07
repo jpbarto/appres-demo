@@ -6,14 +6,14 @@ export function Server(upstream, downstream, nodeName, postMessage) {
     this.nodeName = nodeName;
     this.postMessage = postMessage;
 
-    this.clientMsgQueue = [];
+    this.upMsgQueue = [];
     this.workingQueue = [];
     this.downMsgQueue = [];
 
     this.stats = {
         upRqstCount: 0, // number of requests sent from upstream
         upRespCount: 0, // number of responses sent to upstream
-        upLatencies: [], // a history since lastUpdate of time taken to respond to a request (in milliseconds)
+        latencies: [], // a history since lastUpdate of time taken to respond to a request (in milliseconds)
         upErr: 0, // number of errors returned to the upstream
         downRqstCount: 0, // number of requests sent downstream
         downRespCount: 0, // number of responses from downstream
@@ -30,7 +30,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
     this.resetStats = function () {
         this.stats.upRqstCount = 0;
         this.stats.upRespCount = 0;
-        this.stats.upLatencies.length = 0;
+        this.stats.latencies.length = 0;
         this.stats.upErr = 0;
         this.stats.downRqstCount = 0;
         this.stats.downRespCount = 0;
@@ -41,8 +41,8 @@ export function Server(upstream, downstream, nodeName, postMessage) {
     this.processMessageQueues = function () {
         var clientResponse;
 
-        if (this.clientMsgQueue.length > 0) {
-            var clientRequest = this.clientMsgQueue.shift();
+        if (this.upMsgQueue.length > 0) {
+            var clientRequest = this.upMsgQueue.shift();
 
             if (this.downstream != null) {
                 this.sendMessage(clientRequest);
@@ -51,7 +51,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
                 clientResponse = new NetworkResponse(this.upstream, this.nodeName, clientRequest.traceId, { result: 'success' });
                 this.postMessage(clientResponse);
                 this.stats.upRespCount++;
-                this.stats.upLatencies.push(Date.now() - clientRequest.received);
+                this.stats.latencies.push(Date.now() - clientRequest.received);
             }
         }
 
@@ -65,8 +65,8 @@ export function Server(upstream, downstream, nodeName, postMessage) {
                 clientResponse = new NetworkResponse(this.upstream, this.nodeName, workRequest.traceId, downResponse.data);
                 this.postMessage(clientResponse);
                 this.stats.upRespCount++;
-                this.stats.upLatencies.push(Date.now() - workRequest.received);
             }
+            this.stats.latencies.push(Date.now() - workRequest.received);
         }
 
         setTimeout(this.processMessageQueues.bind(this), 2);
@@ -92,7 +92,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
             this.downMsgQueue.push(request);
             this.stats.downRespCount++;
         } else if (request.from == this.upstream) {
-            this.clientMsgQueue.push(request);
+            this.upMsgQueue.push(request);
             this.stats.upRqstCount++;
         }
     };

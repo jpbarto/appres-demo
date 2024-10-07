@@ -4,11 +4,9 @@
     <div id="statsConsole">
       <LoadStats :stats-board="loadStatsBoard" :worker="loadgen" />
       <NodeStats :stats-board="gwStatsBoard" :worker="gateway" />
-      <!--
-      <node-stats :worker="websvr" />
-      <node-stats :worker="appsvr" />
-      <node-stats :worker="datasvr" /> -->
-      Hello World
+      <node-stats :stats-board="webStatsBoard" :worker="websvr" />
+      <node-stats :stats-board="appStatsBoard" :worker="appsvr" />
+      <node-stats :stats-board="dataStatsBoard" :worker="datasvr" />
     </div>
   </div>
 </template>
@@ -21,9 +19,7 @@ import LoadStats from './components/LoadStats.vue';
 import * as jsNetwork from './assets/js/Network.js';
 import * as StatsMan from './assets/js/StatsMan.js';
 
-const network = new jsNetwork.Network();
-network.latency = 1;
-network.jitter = 1;
+const network = new jsNetwork.Network(1, 1);
 
 const datasvr = new Worker(new URL('./assets/js/DataServer.js', import.meta.url));
 datasvr.nodeDisplayName = 'Data Server';
@@ -54,13 +50,11 @@ statsMan.addNode(websvr);
 statsMan.addNode(gateway);
 statsMan.addNode(loadGen);
 // const loadStatsBoard = statsMan.loadStatsBoard;
+const dataStatsBoard = statsMan.nodeStats[datasvr.nodeName];
+const appStatsBoard = statsMan.nodeStats[appsvr.nodeName];
+const webStatsBoard = statsMan.nodeStats[websvr.nodeName];
 const gwStatsBoard = statsMan.nodeStats[gateway.nodeName];
 const loadStatsBoard = statsMan.nodeStats[loadGen.nodeName];
-
-loadGen.postMessage({
-  command: 'setRequestsPerSecond',
-  rps: 25
-});
 
 export default {
   name: 'App',
@@ -71,12 +65,15 @@ export default {
   data() {
     return {
       // loadStatsBoard: statsMan.nodeStats['load-generator'],
-      loadStatsBoard: loadStatsBoard,
       gwStatsBoard: gwStatsBoard,
       gateway: gateway,
+      webStatsBoard: webStatsBoard,
       websvr: websvr,
+      appStatsBoard: appStatsBoard,
       appsvr: appsvr,
+      dataStatsBoard: dataStatsBoard,
       datasvr: datasvr,
+      loadStatsBoard: loadStatsBoard,
       loadgen: loadGen
     }
   }

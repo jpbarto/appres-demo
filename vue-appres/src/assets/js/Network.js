@@ -34,7 +34,7 @@ export class NetworkResponse extends NetworkPacket {
 }
 
 export class Network {
-    constructor(latency = 0, jitter = 0) {
+    constructor(latency = 1, jitter = 1) {
         this.nodes = {};
         this.edgeLatencies = new Map();
         this.latency = latency;

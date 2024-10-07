@@ -5,27 +5,27 @@
       <div class="statTitle">{{ worker.nodeDisplayName }}</div>
       <div class="statLine">
         <span class="statLabel">Connections</span>
-        <span id="gwConnections" class="statValue">{{ statsBoard.downRespCount }}</span>
+        <span id="gwConnections" class="statValue">{{ statsBoard.connections }}</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Throughput</span>
-        <span id="gwThroughput" class="statValue">23 TPS</span>
+        <span id="gwThroughput" class="statValue">{{ statsBoard.throughput }} TPS</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Latency Mean</span>
-        <span id="gwLatMean" class="statValue">23 ms</span>
+        <span id="gwLatMean" class="statValue">{{ statsBoard.latMean }} ms</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Latency P50</span>
-        <span id="gwLatPercentiles" class="statValue">23 ms</span>
+        <span id="gwLatPercentiles" class="statValue">{{ statsBoard.latP50 }} ms</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Latency P90</span>
-        <span id="gwLatPercentiles" class="statValue">23 ms</span>
+        <span id="gwLatPercentiles" class="statValue">{{ statsBoard.latP90 }} ms</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Latency P100</span>
-        <span id="gwLatPercentiles" class="statValue">23 ms</span>
+        <span id="gwLatPercentiles" class="statValue">{{ statsBoard.latP100 }} ms</span>
       </div>
       <div class="statLine">
         <span class="statLabel">Service</span>
@@ -38,6 +38,10 @@
       <div class="statLine">
         <span class="statLabel">QoS</span>
         <span id="gwQos" class="statValue">1.000</span>
+      </div>
+      <div class="statLine">
+        <span class="statLabel">Last Update</span>
+        <span class="statValue">{{ new Date(statsBoard.lastUpdate).toLocaleTimeString('en-us', { hour12: false, hour:"2-digit", minute:"2-digit", second:"2-digit"}) }}</span>
       </div>
     </div>
   </div>
@@ -94,7 +98,7 @@ div.nodeIcon {
 div.statWindow {
   border: 1px solid black;
   padding: 5px;
-  width: 11em;
+  width: 12em;
   margin-top: 20px;
 }
 

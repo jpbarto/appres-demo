@@ -7,7 +7,7 @@ const nodeName = 'load-generator';
 const server = new Server(upstream, downstream, nodeName, postMessage.bind(this));
 // eslint-disable-next-line
 var intervalId;
-var requestsPerSec = 1;
+var requestsPerSec = 0;
 
 addEventListener('message', server.onMessage.bind(server));
 
@@ -23,7 +23,9 @@ function setRequestsPerSecond(rps) {
 
 // eslint-disable-next-line
 function sendLoadMessage() {
-    server.sendMessage(new NetworkRequest(downstream, nodeName));
+    const rqst = new NetworkRequest(downstream, nodeName);
+    rqst.received = Date.now ();
+    server.sendMessage(rqst);
 }
 
 function handleCommandMessage (msg) {
