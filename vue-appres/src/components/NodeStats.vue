@@ -1,6 +1,38 @@
 <template>
   <div>
     <div class="nodeIcon"></div>
+    <div id="nodeConfig">
+      <div class="confLine">
+        <div class="confName">Request Timeout</div>
+        <div class="confValue">
+          <input value="100"/>
+        </div>
+      </div>
+      <div class="confLine">
+        <div class="confName">Queue Limit</div>
+        <div class="confValue">
+          <input value="100"/>
+        </div>
+      </div>
+      <div class="confLine">
+        <div class="confName">Shed Limit</div>
+        <div class="confValue">
+          <input value="100"/>
+        </div>
+      </div>
+      <div class="confLine">
+        <div class="confName">Adaptive Retry</div>
+        <div class="confValue">
+          <input value="Radio No"/>
+        </div>
+      </div>
+      <div class="confLine">
+        <div class="confName">Retry Count</div>
+        <div class="confValue">
+          <input value="2"/>
+        </div>
+      </div>
+    </div>
     <div id="nodeStats" class="statWindow">
       <div class="statTitle">{{ worker.nodeDisplayName }}</div>
       <div class="statLine">
@@ -41,7 +73,9 @@
       </div>
       <div class="statLine">
         <span class="statLabel">Last Update</span>
-        <span class="statValue">{{ new Date(statsBoard.lastUpdate).toLocaleTimeString('en-us', { hour12: false, hour:"2-digit", minute:"2-digit", second:"2-digit"}) }}</span>
+        <span class="statValue">{{ new Date(statsBoard.lastUpdate).toLocaleTimeString('en-us', {
+          hour12: false,
+          hour: "2-digit", minute: "2-digit", second:"2-digit"}) }}</span>
       </div>
     </div>
   </div>

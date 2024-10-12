@@ -10,11 +10,14 @@ export function Server(upstream, downstream, nodeName, postMessage) {
     this.workingQueue = [];
     this.downMsgQueue = [];
 
+    this.workDelay = 2;
+
     this.stats = {
         upRqstCount: 0, // number of requests sent from upstream
         upRespCount: 0, // number of responses sent to upstream
         latencies: [], // a history since lastUpdate of time taken to respond to a request (in milliseconds)
         upErr: 0, // number of errors returned to the upstream
+        workRqstCount: 0, // number of requests currently waiting for response
         downRqstCount: 0, // number of requests sent downstream
         downRespCount: 0, // number of responses from downstream
         downErr: 0, // number of errors received from downstream
@@ -32,6 +35,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
         this.stats.upRespCount = 0;
         this.stats.latencies.length = 0;
         this.stats.upErr = 0;
+        this.stats.workRqstCount = 0;
         this.stats.downRqstCount = 0;
         this.stats.downRespCount = 0;
         this.stats.downErr = 0;
@@ -60,6 +64,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
             var downResponse = this.downMsgQueue.shift();
             var workRequestIndex = this.workingQueue.findIndex((request) => request.traceId == downResponse.traceId);
             var workRequest = this.workingQueue.splice(workRequestIndex, 1)[0];
+            this.stats.workRqstCount = this.workingQueue.length;
             // craft a response for the client and send it
             if (this.upstream != null) {
                 clientResponse = new NetworkResponse(this.upstream, this.nodeName, workRequest.traceId, downResponse.data);
@@ -69,7 +74,7 @@ export function Server(upstream, downstream, nodeName, postMessage) {
             this.stats.latencies.push(Date.now() - workRequest.received);
         }
 
-        setTimeout(this.processMessageQueues.bind(this), 2);
+        setTimeout(this.processMessageQueues.bind(this), this.workDelay);
     };
 
     this.sendMessage = function (request) {
