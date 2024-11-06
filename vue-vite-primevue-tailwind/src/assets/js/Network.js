@@ -10,7 +10,7 @@
  * Not supported today:
  * - multicast
  */
-class NetworkPacket {
+export class NetworkPacket {
     constructor(to, from, data) {
         this.to = to;
         this.from = from;

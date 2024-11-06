@@ -1,4 +1,4 @@
-import { Server } from './Server.js';
+import { Server } from "./Server.js";
 
 const upstream = 'web-server';
 const downstream = 'data-server';

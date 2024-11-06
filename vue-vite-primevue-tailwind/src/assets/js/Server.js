@@ -1,4 +1,4 @@
-import { NetworkRequest, NetworkResponse } from './Network.js';
+import { NetworkRequest, NetworkResponse } from "./Network";
 
 export function Server(upstream, downstream, nodeName, postMessage) {
     this.upstream = upstream;

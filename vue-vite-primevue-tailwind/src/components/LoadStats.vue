@@ -126,9 +126,6 @@ const loadRps = defineModel({
       command: 'setRequestsPerSecond',
       rps: v
     })
-    console.log ('got new value of', v);
-    console.log (props.worker);
-    console.log (props.worker.postMessage);
     return v;
   }
 })

@@ -7,19 +7,19 @@ import * as StatsMan from './assets/js/StatsMan.js';
 
 const network = new jsNetwork.Network(1, 1);
 
-const datasvr = new Worker(new URL('./assets/js/DataServer.js', import.meta.url));
+const datasvr = new Worker(new URL('./assets/js/DataServer.js', import.meta.url), {type: "module"});
 datasvr.nodeDisplayName = 'Data Server';
 datasvr.nodeName = 'data-server';
-const appsvr = new Worker(new URL('./assets/js/AppServer.js', import.meta.url));
+const appsvr = new Worker(new URL('./assets/js/AppServer.js', import.meta.url), {type: "module"});
 appsvr.nodeDisplayName = 'App Server';
 appsvr.nodeName = 'app-server';
-const websvr = new Worker(new URL('./assets/js/WebServer.js', import.meta.url));
+const websvr = new Worker(new URL('./assets/js/WebServer.js', import.meta.url), {type: "module"});
 websvr.nodeDisplayName = 'Web Server';
 websvr.nodeName = 'web-server';
-const gateway = new Worker(new URL('./assets/js/GatewayServer.js', import.meta.url));
+const gateway = new Worker(new URL('./assets/js/GatewayServer.js', import.meta.url), {type: "module"});
 gateway.nodeDisplayName = 'Gateway';
 gateway.nodeName = 'gateway';
-const loadGen = new Worker(new URL('./assets/js/LoadGenerator.js', import.meta.url));
+const loadGen = new Worker(new URL('./assets/js/LoadGenerator.js', import.meta.url), {type: "module"});
 loadGen.nodeDisplayName = 'Load Generator';
 loadGen.nodeName = 'load-generator';
 
