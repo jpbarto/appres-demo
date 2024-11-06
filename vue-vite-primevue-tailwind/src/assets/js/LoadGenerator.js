@@ -21,6 +21,7 @@ server.start();
  * To correct this we will instead send batches of messages at 100ms intervals (10 times a second).
  */
 function setRequestsPerSecond(rps) {
+    console.log ('setting rps to ', rps);
     clearInterval(intervalId);
     requestsPerSec = rps;
     if (requestsPerSec > 0) {
@@ -47,9 +48,11 @@ function sendLoadMessage() {
 }
 
 function handleCommandMessage(msg) {
+    console.log ('got message', msg);
     if ('from' in msg.data) {
         server.onMessage(msg);
     } else {
+        console.log ('got message', msg);
         switch (msg.data.command) {
             case 'setRequestsPerSecond':
                 setRequestsPerSecond(msg.data.rps);
@@ -58,3 +61,4 @@ function handleCommandMessage(msg) {
     }
 }
 addEventListener('message', handleCommandMessage);
+console.log('load generator loaded');

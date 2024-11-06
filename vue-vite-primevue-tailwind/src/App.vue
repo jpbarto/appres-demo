@@ -41,6 +41,10 @@ statsMan.addNode(loadGen);
 // const webStatsBoard = statsMan.nodeStats[websvr.nodeName];
 // const gwStatsBoard = statsMan.nodeStats[gateway.nodeName];
 const loadStatsBoard = statsMan.nodeStats[loadGen.nodeName];
+    loadGen.postMessage({
+      command: 'setRequestsPerSecond',
+      rps: 1
+    });
 </script>
 
 <template>
