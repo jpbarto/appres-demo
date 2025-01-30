@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="./Network.js"></script>
+        <script>
+            network = new Network ();
+
+            node1 = new Worker ('./node1.js');
+            node2 = new Worker ('./node2.js');
+
+            network.addNode ('node1', node1);
+            network.addNode ('node2', node2);
+        </script>
+    </head>
+</html>
